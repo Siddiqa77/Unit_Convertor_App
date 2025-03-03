@@ -1,180 +1,258 @@
-
-
-# import streamlit as st
-# import streamlit.components.v1 as components
-# import pyttsx3
-# import speech_recognition as sr
-# import re
-
-# conversion_factors = {
-#     "Length": {
-#         "Meter": 1, "Kilometer": 0.001, "Centimeter": 100, "Millimeter": 1000, "Mile": 0.000621371,
-#         "Yard": 1.09361, "Foot": 3.28084, "Inch": 39.3701, "Nanometer": 1e9, "Micrometer": 1e6
-#     },
-#     "Weight": {
-#         "Kilogram": 1, "Gram": 1000, "Pound": 2.20462, "Ounce": 35.274, "Ton": 0.001, "Milligram": 1e6
-#     },
-#     "Temperature": {
-#         "Celsius": lambda c: c, "Fahrenheit": lambda c: (c * 9/5) + 32, "Kelvin": lambda c: c + 273.15
-#     },
-#     "Speed": {
-#         "Meters per second": 1, "Kilometers per hour": 3.6, "Miles per hour": 2.23694, "Knots": 1.94384
-#     },
-#     "Time": {
-#         "Second": 1, "Minute": 1/60, "Hour": 1/3600, "Day": 1/86400
-#     }
-# }
-
-# unit_aliases = {
-#     "m": "Meter", "km": "Kilometer", "cm": "Centimeter", "mm": "Millimeter", "mi": "Mile",
-#     "yd": "Yard", "ft": "Foot", "in": "Inch", "nm": "Nanometer", "um": "Micrometer",
-#     "kg": "Kilogram", "g": "Gram", "lb": "Pound", "oz": "Ounce", "mg": "Milligram", "t": "Ton",
-#     "c": "Celsius", "f": "Fahrenheit", "k": "Kelvin", "mps": "Meters per second",
-#     "kph": "Kilometers per hour", "mph": "Miles per hour", "kt": "Knots",
-#     "s": "Second", "min": "Minute", "h": "Hour", "d": "Day"
-# }
-
-# def convert_units(value, from_unit, to_unit, unit_type):
-#     if unit_type == "Temperature":
-#         temp_in_celsius = value if from_unit == "Celsius" else (value - 32) * 5/9 if from_unit == "Fahrenheit" else value - 273.15
-#         return conversion_factors[unit_type][to_unit](temp_in_celsius)
-#     else:
-#         return value * (conversion_factors[unit_type][to_unit] / conversion_factors[unit_type][from_unit])
-
-# def speak(text):
-#     engine = pyttsx3.init()
-#     engine.say(text)
-#     engine.runAndWait()
-
-# def listen():
-#     recognizer = sr.Recognizer()
-#     with sr.Microphone() as source:
-#         st.write("🎤 Listening...")
-#         try:
-#             audio = recognizer.listen(source)
-#             command = recognizer.recognize_google(audio)
-#             return command.lower()
-#         except sr.UnknownValueError:
-#             return "Sorry, I didn't understand."
-#         except sr.RequestError:
-#             return "Speech recognition service unavailable."
-
-# def process_voice_command(command):
-#     pattern = r"convert (\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|into)\s*([a-zA-Z]+)"
-#     match = re.search(pattern, command)
-#     if match:
-#         try:
-#             value = float(match.group(1))
-#             from_unit = unit_aliases.get(match.group(3).lower(), match.group(3).capitalize())
-#             to_unit = unit_aliases.get(match.group(5).lower(), match.group(5).capitalize())
-            
-#             for unit_type, units in conversion_factors.items():
-#                 if from_unit in units and to_unit in units:
-#                     result = convert_units(value, from_unit, to_unit, unit_type)
-#                     response = f"{value} {from_unit} is equal to {result:.4f} {to_unit}."
-#                     st.write(response)
-#                     speak(response)
-#                     return
-#             st.write("Invalid conversion units.")
-#             speak("Invalid conversion units.")
-#         except ValueError:
-#             st.write("Could not process the conversion command correctly.")
-#             speak("Could not process the conversion command correctly.")
-#     else:
-#         st.write("Command not recognized.")
-#         speak("Command not recognized.")
-
-# # Streamlit UI
-# st.set_page_config(page_title="Unit Converter App", page_icon="🔄", layout="wide")
-# st.markdown("""
-#     <style>
-#         body {
-#             background-color: #f4f4f4;
-#             background: linear-gradient(to right, #1e3c72, #2a5298);
-#             font-family: Arial, sans-serif;
-#         }
-#         .container {
-#             max-width: 600px;
-#             margin: auto;
-#             padding: 20px;
-#             background: white;
-#             border-radius: 10px;
-#             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-#             text-align: center;
-#         }
-#         h1 {
-#             color: #2a5298;
-#             font-size: 28px;
-#             font-weight: bold;
-#             padding: 10px;
-#         }
-#     </style>
-# """, unsafe_allow_html=True)
-
-# st.markdown("<div class='container'><h1>🔄 Unit Converter</h1>", unsafe_allow_html=True)
-
-# unit_types = ["Length", "Weight", "Temperature", "Speed", "Time", "Voice Command"]
-# selected_type = st.selectbox("Select Unit Type:", unit_types)
-
-# if selected_type == "Voice Command":
-#     st.write("🤖 Speak your conversion command (e.g., Convert 10 m to ft)")
-#     if st.button("🎤 Speak Command"):
-#         user_command = listen()
-#         st.write(f"You said: {user_command}")
-#         process_voice_command(user_command)
-# else:
-#     unit_options = list(conversion_factors[selected_type].keys())
-#     from_unit = st.selectbox("From Unit:", unit_options)
-#     to_unit = st.selectbox("To Unit:", unit_options)
-
-#     value = st.number_input("Enter Value:", min_value=0.0, format="%.4f")
-
-#     if st.button("Convert"):
-#         result = convert_units(value, from_unit, to_unit, selected_type)
-#         result_text = f"{value} {from_unit} is equal to {result:.4f} {to_unit}."
-#         st.markdown(f"<h2>{result_text}</h2>", unsafe_allow_html=True)
-#         speak(result_text)
-
-# st.markdown("</div>", unsafe_allow_html=True)
-
-
+import os
+import time
 import streamlit as st
-import pyttsx3
+import pygame
 import speech_recognition as sr
-import re
+from gtts import gTTS
+import re  # ✅ Ensure regex is imported
+
+# Initialize pygame
+pygame.mixer.init()
 
 # Conversion Factors
 types = {
-    "Length": {"Meter": 1, "Kilometer": 0.001, "Centimeter": 100, "Millimeter": 1000, "Mile": 0.000621371,
-                "Yard": 1.09361, "Foot": 3.28084, "Inch": 39.3701, "Nanometer": 1e9, "Micrometer": 1e6},
-    "Weight": {"Kilogram": 1, "Gram": 1000, "Pound": 2.20462, "Ounce": 35.274, "Ton": 0.001, "Milligram": 1e6},
-    "Temperature": {"Celsius": lambda c: c, "Fahrenheit": lambda c: (c * 9/5) + 32, "Kelvin": lambda c: c + 273.15},
-    "Speed": {"Meters per second": 1, "Kilometers per hour": 3.6, "Miles per hour": 2.23694, "Knots": 1.94384},
-    "Time": {"Second": 1, "Minute": 1/60, "Hour": 1/3600, "Day": 1/86400}
+    "Length": {
+        "meter": 1, "kilometer": 0.001, "centimeter": 100, "millimeter": 1000, "mile": 0.000621371,
+        "yard": 1.09361, "foot": 3.28084, "inch": 39.3701, "nautical mile": 0.000539957, "light year": 1.057e-16
+    },
+    "Weight": {
+        "kilogram": 1, "gram": 1000, "pound": 2.20462, "ounce": 35.274, "ton": 0.001,
+        "milligram": 1_000_000, "microgram": 1_000_000_000, "stone": 0.157473
+    },
+    "Temperature": {
+        "celsius": lambda c: c,
+        "fahrenheit": lambda c: (c * 9/5) + 32,
+        "kelvin": lambda c: c + 273.15,
+        "rankine": lambda c: (c + 273.15) * 9/5,
+        "reaumur": lambda c: c * 4/5
+    },
+    "Time": {
+        "second": 1, "minute": 1/60, "hour": 1/3600, "day": 1/86400, "week": 1/604800,
+        "month": 1/2.628e+6, "year": 1/3.154e+7
+    },
+    "Volume": {
+        "liter": 1, "milliliter": 1000, "cubic meter": 0.001, "cubic centimeter": 1000,
+        "gallon": 0.264172, "quart": 1.05669, "pint": 2.11338, "cup": 4.16667
+    }
+}
+st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@500;700&family=Orbitron:wght@500&display=swap');
+
+    /* Global styles */
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, #141e30, #243b55) !important;
+        color: #ffffff !important;
+    }
+
+    /* Main App Container */
+    .stApp {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+   /* Sidebar Styling */
+.stSidebar {
+    background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    
 }
 
-# Unit Aliases
-aliases = {"m": "Meter", "km": "Kilometer", "cm": "Centimeter", "mm": "Millimeter", "mi": "Mile",
-           "yd": "Yard", "ft": "Foot", "in": "Inch", "nm": "Nanometer", "um": "Micrometer",
-           "kg": "Kilogram", "g": "Gram", "lb": "Pound", "oz": "Ounce", "mg": "Milligram", "t": "Ton",
-           "c": "Celsius", "f": "Fahrenheit", "k": "Kelvin", "mps": "Meters per second",
-           "kph": "Kilometers per hour", "mph": "Miles per hour", "kt": "Knots",
-           "s": "Second", "min": "Minute", "h": "Hour", "d": "Day"}
+/* Sidebar Text Visibility Fix */
+.stSidebar div, .stSidebar span, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar p {
+    color: #000000 !important;  /* Bright white text for contrast */
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Sidebar Hover Effects */
+.stSidebar div:hover, .stSidebar span:hover, .stSidebar p:hover {
+    color: #00ffff !important;  /* Glowing cyan effect on hover */
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+    transition: all 0.3s ease-in-out;
+}
+
+
+    /* Main Title */
+    .stTitle {
+        text-align: center;
+        font-size: 3rem;
+        font-weight: bold;
+        font-family: 'Orbitron', sans-serif;
+        color: #3c3635 !important;
+        text-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+        margin-bottom: 20px;
+    }
+
+    /* Subheader */
+    .stSubheader {
+        font-size: 1.8rem;
+        font-weight: bold;
+        font-family: 'Raleway', sans-serif;
+        color: #ffcc00 !important;
+        text-shadow: 0 0 10px rgba(255, 204, 0, 0.8);
+    }
+
+    /* Input Fields */
+    .stTextInput>div>div>input, 
+    .stNumberInput>div>div>input, 
+    .stSelectbox>div>div>select {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+        border: 2px solid rgba(0, 255, 255, 0.5);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 1rem;
+        font-family: 'Raleway', sans-serif;
+        transition: all 0.3s ease;
+    }
+
+    /* Glowing Hover Effect */
+    .stTextInput>div>div>input:hover, 
+    .stNumberInput>div>div>input:hover, 
+    .stSelectbox>div>div>select:hover {
+        border-color: #00ffff;
+        box-shadow: 0 0 12px rgba(0, 255, 255, 0.8);
+    }
+
+    /* Button Styling */
+    .stButton>button {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b) !important;
+        color: white !important;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 25px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        font-family: 'Orbitron', sans-serif;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(255, 65, 108, 0.4);
+    }
+
+    .stButton>button:hover {
+        background: linear-gradient(135deg, #ff4b2b, #ff416c) !important;
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(255, 65, 108, 0.6);
+    }
+
+    .stButton>button:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 12px rgba(255, 65, 108, 0.3);
+    }
+
+    /* Results Section */
+    .stMarkdown {
+        background: rgba(255, 255, 255, 0.1);
+        color: #000 !important;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 3rem;
+        text-align: center;
+        font-family: 'Raleway', sans-serif;
+        box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Success & Warning Messages */
+    .stSuccess {
+        background: rgba(0, 255, 0, 0.2) !important;
+        color: #00ff00 !important;
+        border: 2px solid #00ff00;
+        border-radius: 10px;
+        padding: 10px;
+            font-size: 20px;
+        font-family: 'Raleway', sans-serif;
+    }
+
+    .stWarning {
+        background: rgba(255, 204, 0, 0.2) !important;
+        color: #ffcc00 !important;
+        border: 2px solid #ffcc00;
+        border-radius: 10px;
+        padding: 10px;
+        font-family: 'Raleway', sans-serif;
+    }
+
+    /* Tab Styling */
+    .stTabs>div>button {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        font-family: 'Orbitron', sans-serif;
+        transition: all 0.3s ease;
+    }
+
+    .stTabs>div>button:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: #00c6ff !important;
+    }
+
+    .stTabs>div>button:focus {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: #00c6ff !important;
+    }
+
+    </style>
+""", unsafe_allow_html=True)
+
+
 
 # Conversion Function
 def convert(value, from_unit, to_unit, unit_type):
     if unit_type == "Temperature":
-        temp = value if from_unit == "Celsius" else (value - 32) * 5/9 if from_unit == "Fahrenheit" else value - 273.15
+        temp = value if from_unit == "celsius" else (value - 32) * 5/9 if from_unit == "fahrenheit" else value - 273.15
         return types[unit_type][to_unit](temp)
     else:
         return value * (types[unit_type][to_unit] / types[unit_type][from_unit])
 
-# Speech Functions
+# Speech Function
 def speak(text):
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    text = text.replace(" 0 ", " zero ")  
+    text = text.replace("0.", "zero point ")  
+    
+    tts = gTTS(text=text, lang="en")
+    file_path = "output.mp3"
+    pygame.mixer.music.stop()
+    pygame.mixer.quit()
+    pygame.mixer.init()
 
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except PermissionError:
+            time.sleep(1)
+            os.remove(file_path)
+
+    tts.save(file_path)
+    pygame.mixer.music.load(file_path)
+    pygame.mixer.music.play()
+
+    while pygame.mixer.music.get_busy():
+        time.sleep(0.1)
+
+    pygame.mixer.music.stop()
+    pygame.mixer.quit()
+    pygame.mixer.init()
+
+    time.sleep(0.5)
+    
+    try:
+        os.remove(file_path)
+    except PermissionError:
+        time.sleep(1)
+        os.remove(file_path)
+
+# Speech Recognition
 def listen():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -189,52 +267,55 @@ def listen():
 
 # Process Voice Command
 def process_voice_command(command):
-    pattern = r"convert (\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|into)\s*([a-zA-Z]+)"
-    match = re.search(pattern, command)
+    pattern = r"(?:convert\s*)?(\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|into)\s*([a-zA-Z]+)"
+    match = re.search(pattern, command, re.IGNORECASE)
+
     if match:
-        try:
-            value = float(match.group(1))
-            from_unit = aliases.get(match.group(3).lower(), match.group(3).capitalize())
-            to_unit = aliases.get(match.group(5).lower(), match.group(5).capitalize())
-            
-            for unit_type, units in types.items():
-                if from_unit in units and to_unit in units:
-                    result = convert(value, from_unit, to_unit, unit_type)
-                    response = f"{value} {from_unit} is equal to {result:.4f} {to_unit}."
-                    st.write(response)
-                    speak(response)
-                    return
-            
-            st.write("Invalid conversion units.")
-            speak("Invalid conversion units.")
-        except ValueError:
-            st.write("Could not process the conversion command correctly.")
-            speak("Could not process the conversion command correctly.")
+        value = float(match.group(1))
+        from_unit = match.group(3).lower()
+        to_unit = match.group(5).lower()
+
+        # ✅ Find matching unit type
+        for unit_type, units in types.items():
+            if from_unit in units and to_unit in units:
+                result = convert(value, from_unit, to_unit, unit_type)
+                result_text = f"{value} {from_unit} is equal to {result:.4f} {to_unit}"
+                
+                # ✅ Display & Speak Result
+                st.write(result_text)
+                speak(result_text)
+                return
+        
+        st.write("Invalid conversion units.")
+        speak("Invalid conversion units.")
     else:
         st.write("Command not recognized.")
         speak("Command not recognized.")
 
 # Streamlit UI
-st.set_page_config(page_title="Unit Converter App", page_icon="🔄", layout="wide")
-st.title("🔄 Unit Converter")
+st.markdown("<h1 class='main-title'>🔄 Unit Converter</h1>", unsafe_allow_html=True)
 
 unit_types = list(types.keys()) + ["Voice Command"]
-selected_type = st.selectbox("Select Unit Type:", unit_types)
+selected_type = st.sidebar.selectbox("Select Unit Type:", unit_types)
 
 if selected_type == "Voice Command":
-    st.write("🤖 Speak your conversion command (e.g., Convert 10 m to ft)")
+    st.write("🎙 Speak your conversion command (e.g., Convert 10 meters to feet)")
+    
     if st.button("🎤 Speak Command"):
         user_command = listen()
-        st.write(f"You said: {user_command}")
-        process_voice_command(user_command)
+        st.write(f"**You said:** {user_command}")
+        speak(user_command)  # Speak out the recognized command
+        
+        # ✅ Process and convert the command
+        process_voice_command(user_command)  # Call conversion function
 else:
     unit_options = list(types[selected_type].keys())
     from_unit = st.selectbox("From Unit:", unit_options)
     to_unit = st.selectbox("To Unit:", unit_options)
-    value = st.number_input("Enter Value:", min_value=0.0, format="%.4f")
-    
+    value = st.number_input("Enter Value:", min_value=0.00, format="%.4f")
+
     if st.button("Convert"):
         result = convert(value, from_unit, to_unit, selected_type)
-        result_text = f"{value} {from_unit} is equal to {result:.4f} {to_unit}."
-        st.success(result_text)
+        result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
+        st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
         speak(result_text)
