@@ -1,10 +1,9 @@
+
 import os
 import time
 import streamlit as st
 import pygame
-import speech_recognition as sr
 from gtts import gTTS
-import re  # ✅ Ensure regex is imported
 
 # Initialize pygame
 pygame.mixer.init()
@@ -23,8 +22,7 @@ types = {
         "celsius": lambda c: c,
         "fahrenheit": lambda c: (c * 9/5) + 32,
         "kelvin": lambda c: c + 273.15,
-        "rankine": lambda c: (c + 273.15) * 9/5,
-        "reaumur": lambda c: c * 4/5
+       
     },
     "Time": {
         "second": 1, "minute": 1/60, "hour": 1/3600, "day": 1/86400, "week": 1/604800,
@@ -66,7 +64,7 @@ st.markdown("""
 
 /* Sidebar Text Visibility Fix */
 .stSidebar div, .stSidebar span, .stSidebar h1, .stSidebar h2, .stSidebar h3, .stSidebar h4, .stSidebar h5, .stSidebar h6, .stSidebar p {
-    color: #000000 !important;  /* Bright white text for contrast */
+    color: #0000ff !important;  /* Bright white text for contrast */
     font-family: 'Poppins', sans-serif;
     font-size: 1rem;
     font-weight: 500;
@@ -158,6 +156,9 @@ st.markdown("""
         font-family: 'Raleway', sans-serif;
         box-shadow: 0 4px 10px rgba(255, 255, 255, 0.2);
     }
+            .result-text {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px;
 
     /* Success & Warning Messages */
     .stSuccess {
@@ -252,70 +253,19 @@ def speak(text):
         time.sleep(1)
         os.remove(file_path)
 
-# Speech Recognition
-def listen():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("🎤 Listening...")
-        try:
-            audio = recognizer.listen(source)
-            return recognizer.recognize_google(audio).lower()
-        except sr.UnknownValueError:
-            return "Sorry, I didn't understand."
-        except sr.RequestError:
-            return "Speech recognition service unavailable."
-
-# Process Voice Command
-def process_voice_command(command):
-    pattern = r"(?:convert\s*)?(\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|into)\s*([a-zA-Z]+)"
-    match = re.search(pattern, command, re.IGNORECASE)
-
-    if match:
-        value = float(match.group(1))
-        from_unit = match.group(3).lower()
-        to_unit = match.group(5).lower()
-
-        # ✅ Find matching unit type
-        for unit_type, units in types.items():
-            if from_unit in units and to_unit in units:
-                result = convert(value, from_unit, to_unit, unit_type)
-                result_text = f"{value} {from_unit} is equal to {result:.4f} {to_unit}"
-                
-                # ✅ Display & Speak Result
-                st.write(result_text)
-                speak(result_text)
-                return
-        
-        st.write("Invalid conversion units.")
-        speak("Invalid conversion units.")
-    else:
-        st.write("Command not recognized.")
-        speak("Command not recognized.")
-
 # Streamlit UI
 st.markdown("<h1 class='main-title'>🔄 Unit Converter</h1>", unsafe_allow_html=True)
 
-unit_types = list(types.keys()) + ["Voice Command"]
+unit_types = list(types.keys())
 selected_type = st.sidebar.selectbox("Select Unit Type:", unit_types)
 
-if selected_type == "Voice Command":
-    st.write("🎙 Speak your conversion command (e.g., Convert 10 meters to feet)")
-    
-    if st.button("🎤 Speak Command"):
-        user_command = listen()
-        st.write(f"**You said:** {user_command}")
-        speak(user_command)  # Speak out the recognized command
-        
-        # ✅ Process and convert the command
-        process_voice_command(user_command)  # Call conversion function
-else:
-    unit_options = list(types[selected_type].keys())
-    from_unit = st.selectbox("From Unit:", unit_options)
-    to_unit = st.selectbox("To Unit:", unit_options)
-    value = st.number_input("Enter Value:", min_value=0.00, format="%.4f")
+unit_options = list(types[selected_type].keys())
+from_unit = st.selectbox("From Unit:", unit_options)
+to_unit = st.selectbox("To Unit:", unit_options)
+value = st.number_input("Enter Value:", min_value=0.00, format="%.4f")
 
-    if st.button("Convert"):
-        result = convert(value, from_unit, to_unit, selected_type)
-        result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
-        st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
-        speak(result_text)
+if st.button("Convert"):
+    result = convert(value, from_unit, to_unit, selected_type)
+    result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
+    st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
+    speak(result_text)
