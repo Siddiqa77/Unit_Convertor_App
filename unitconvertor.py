@@ -2,9 +2,7 @@ import os
 import time
 import streamlit as st
 import pygame
-import speech_recognition as sr
 from gtts import gTTS
-import re  
 
 # Initialize pygame
 pygame.mixer.init()
@@ -23,8 +21,6 @@ types = {
         "celsius": lambda c: c,
         "fahrenheit": lambda c: (c * 9/5) + 32,
         "kelvin": lambda c: c + 273.15,
-        "rankine": lambda c: (c + 273.15) * 9/5,
-        "reaumur": lambda c: c * 4/5
     },
     "Time": {
         "second": 1, "minute": 1/60, "hour": 1/3600, "day": 1/86400, "week": 1/604800,
@@ -35,6 +31,7 @@ types = {
         "gallon": 0.264172, "quart": 1.05669, "pint": 2.11338, "cup": 4.16667
     }
 }
+
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Raleway:wght@500;700&family=Orbitron:wght@500&display=swap');
@@ -207,8 +204,25 @@ st.markdown("""
 
     </style>
 """, unsafe_allow_html=True)
+# Streamlit UI
+st.markdown("<h1 class='main-title'>🔄 Unit Converter</h1>", unsafe_allow_html=True)
 
+unit_types = list(types.keys())
+selected_type = st.sidebar.selectbox("Select Unit Type:", unit_types)
 
+# Help & About Section
+st.sidebar.markdown("""
+    ## ℹ️ Help & About
+    - Select a unit type from the dropdown.
+    - Choose the units you want to convert between.
+    - Enter a value and click **Convert**.
+    - The result will be displayed and read aloud.
+""")
+
+unit_options = list(types[selected_type].keys())
+from_unit = st.selectbox("From Unit:", unit_options)
+to_unit = st.selectbox("To Unit:", unit_options)
+value = st.number_input("Enter Value:", min_value=0.00, format="%.4f")
 
 # Conversion Function
 def convert(value, from_unit, to_unit, unit_type):
@@ -217,7 +231,7 @@ def convert(value, from_unit, to_unit, unit_type):
         return types[unit_type][to_unit](temp)
     else:
         return value * (types[unit_type][to_unit] / types[unit_type][from_unit])
-
+    
 # Speech Function
 def speak(text):
     text = text.replace(" 0 ", " zero ")  
@@ -255,72 +269,8 @@ def speak(text):
         time.sleep(1)
         os.remove(file_path)
 
-# Speech Recognition
-def listen():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("🎤 Listening...")
-        try:
-            audio = recognizer.listen(source)
-            return recognizer.recognize_google(audio).lower()
-        except sr.UnknownValueError:
-            return "Sorry, I didn't understand."
-        except sr.RequestError:
-            return "Speech recognition service unavailable."
-
-# Process Voice Command
-def process_voice_command(command):
-    pattern = r"(?:convert\s*)?(\d+(\.\d+)?)\s*([a-zA-Z]+)\s*(to|into)\s*([a-zA-Z]+)"
-    match = re.search(pattern, command, re.IGNORECASE)
-
-    if match:
-        value = float(match.group(1))
-        from_unit = match.group(3).lower()
-        to_unit = match.group(5).lower()
-
-        # ✅ Find matching unit type
-        for unit_type, units in types.items():
-            if from_unit in units and to_unit in units:
-                result = convert(value, from_unit, to_unit, unit_type)
-                result_text = f"{value} {from_unit} is equal to {result:.4f} {to_unit}"
-                
-                # ✅ Display & Speak Result
-                st.write(result_text)
-                speak(result_text)
-                return
-        
-        st.write("Invalid conversion units.")
-        speak("Invalid conversion units.")
-    else:
-        st.write("Command not recognized.")
-        speak("Command not recognized.")
-
-# Streamlit UI
-st.markdown("<h1 class='main-title'>🔄 Unit Converter</h1>", unsafe_allow_html=True)
-
-unit_types = list(types.keys()) + ["Voice Command"]
-selected_type = st.sidebar.selectbox("Select Unit Type:", unit_types)
-
-if selected_type == "Voice Command":
-    st.write("🎙 Speak your conversion command (e.g., Convert 10 meters to feet)")
-    
-    if st.button("🎤 Speak Command"):
-        user_command = listen()
-        st.write(f"**You said:** {user_command}")
-        speak(user_command)  # Speak out the recognized command
-        
-        # ✅ Process and convert the command
-        process_voice_command(user_command)  # Call conversion function
-else:
-    unit_options = list(types[selected_type].keys())
-    from_unit = st.selectbox("From Unit:", unit_options)
-    to_unit = st.selectbox("To Unit:", unit_options)
-    value = st.number_input("Enter Value:", min_value=0.00, format="%.4f")
-
-    if st.button("Convert"):
-        result = convert(value, from_unit, to_unit, selected_type)
-        result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
-        st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
-        speak(result_text)
-
-
+if st.button("Convert"):
+    result = convert(value, from_unit, to_unit, selected_type)
+    result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
+    st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
+    speak(result_text)
