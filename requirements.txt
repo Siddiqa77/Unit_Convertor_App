@@ -1,5 +1,6 @@
+streamlit
 gTTS
-pygame
-SpeechRecognition
+
+
 
  

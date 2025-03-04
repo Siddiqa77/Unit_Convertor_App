@@ -1,11 +1,12 @@
 import os
 import time
 import streamlit as st
-import pygame
 from gtts import gTTS
 
+
+
 # Initialize pygame
-pygame.mixer.init()
+
 
 # Conversion Factors
 types = {
@@ -236,41 +237,26 @@ def convert(value, from_unit, to_unit, unit_type):
 def speak(text):
     text = text.replace(" 0 ", " zero ")  
     text = text.replace("0.", "zero point ")  
-    
-    tts = gTTS(text=text, lang="en")
+
     file_path = "output.mp3"
-    pygame.mixer.music.stop()
-    pygame.mixer.quit()
-    pygame.mixer.init()
-
-    if os.path.exists(file_path):
-        try:
-            os.remove(file_path)
-        except PermissionError:
-            time.sleep(1)
-            os.remove(file_path)
-
+    tts = gTTS(text=text, lang="en")
     tts.save(file_path)
-    pygame.mixer.music.load(file_path)
-    pygame.mixer.music.play()
 
-    while pygame.mixer.music.get_busy():
-        time.sleep(0.1)
+    return file_path  # Return MP3 file path instead of playing sound
 
-    pygame.mixer.music.stop()
-    pygame.mixer.quit()
-    pygame.mixer.init()
-
-    time.sleep(0.5)
-    
-    try:
-        os.remove(file_path)
-    except PermissionError:
-        time.sleep(1)
-        os.remove(file_path)
 
 if st.button("Convert"):
     result = convert(value, from_unit, to_unit, selected_type)
     result_text = f"{value} {from_unit} = {result:.4f} {to_unit}"
+    
     st.markdown(f"<h3 class='result-text'>{result_text}</h3>", unsafe_allow_html=True)
-    speak(result_text)
+
+    # Get the MP3 file path
+    audio_file = speak(result_text)
+
+    # Play the audio in Streamlit
+    with open(audio_file, "rb") as f:
+        st.audio(f.read(), format="audio/mp3")
+    
+    # Delete the file to clean up
+    os.remove(audio_file)
